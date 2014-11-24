@@ -11,7 +11,8 @@ Ext.define('CustomApp', {
 	fieldsToCopy : {
 		portfolioitem : [],
 		hierarchicalrequirement : ["ScheduleState","PlanEstimate"],
-		task : ["State","Estimate","TaskIndex","ToDo","Actuals"]
+		task : ["State","Estimate","TaskIndex","ToDo","Actuals"],
+		testcase : ["Method","Objective","PreConditions","PostConditions","ValidationExpectedResult","ValidationInput"]
 	},
 
 	items:[ 
@@ -176,7 +177,7 @@ Ext.define('CustomApp', {
 
 		_.each( app.fieldsToCopy[type], function(field) {
 			copy[field] = item.get(field);
-		})
+		});
 
 		// handle tags.
 		if (item.get("Tags").Count > 0) {
@@ -234,23 +235,37 @@ Ext.define('CustomApp', {
 			var obj = results[0][0];
 			app.list.push(obj);
 			var childRef = null;
+			var childRef2 = null;
 			if (app.defined(obj.get("Tasks"))) {
 				childRef = "Tasks";
+				if (app.defined(obj.get("TestCases"))) {
+					childRef2 = "TestCases";
+				}
 			} else {
-				if (app.defined(obj.get("Children"))){
-					childRef = "Children";
+				if (app.defined(obj.get("TestCases"))) {
+					childRef2 = "TestCases";
 				} else {
-					if (app.defined(obj.get("UserStories"))) {
-						childRef = "UserStories";
-					} 
+					if (app.defined(obj.get("Children"))){
+						childRef = "Children";
+					} else {
+						if (app.defined(obj.get("UserStories"))) {
+							childRef = "UserStories";
+						} 
+					}
 				}
 			}
-
 			if (app.isObject(childRef)) {
+				var configs = [];
 				var config = { reference : obj, type : childRef };
-				async.map([config],app.readCollection,function(err,results){
+				configs.push(config);
+				if (app.isObject(childRef2)) { 
+					var config1 = { reference : obj, type : childRef2 };
+					configs.push(config1);
+				}
+				async.map(configs,app.readCollection,function(err,results){
 					var children = results[0];
-					async.map(children,app.createList,function(err,results){
+					var childrens = results[0].concat(results[1]?results[1]:[]);
+					async.map(childrens,app.createList,function(err,results){
 						callback(null,results);
 					});
 				});
