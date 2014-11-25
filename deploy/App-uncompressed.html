@@ -244,10 +244,11 @@ Ext.define('CustomApp', {
 
 			var obj = results[0][0];
 			app.list.push(obj);
-			var childRef = null;
+			// 2 supported children - tasks, test cases
+			var childRef1 = null;
 			var childRef2 = null;
 			if (app.defined(obj.get("Tasks"))) {
-				childRef = "Tasks";
+				childRef1 = "Tasks";
 				if (app.defined(obj.get("TestCases"))) {
 					childRef2 = "TestCases";
 				}
@@ -256,26 +257,25 @@ Ext.define('CustomApp', {
 					childRef2 = "TestCases";
 				} else {
 					if (app.defined(obj.get("Children"))){
-						childRef = "Children";
+						childRef1 = "Children";
 					} else {
 						if (app.defined(obj.get("UserStories"))) {
-							childRef = "UserStories";
+							childRef1 = "UserStories";
 						} 
 					}
 				}
 			}
-			if (app.isObject(childRef)) {
+			if (app.isObject(childRef1)) {
 				var configs = [];
-				var config = { reference : obj, type : childRef };
+				var config = { reference : obj, type : childRef1 };
 				configs.push(config);
 				if (app.isObject(childRef2)) { 
 					var config1 = { reference : obj, type : childRef2 };
 					configs.push(config1);
 				}
 				async.map(configs,app.readCollection,function(err,results){
-					var children = results[0];
-					var childrens = results[0].concat(results[1]?results[1]:[]);
-					async.map(childrens,app.createList,function(err,results){
+					var children = results[0].concat(results[1]?results[1]:[]);
+					async.map(children,app.createList,function(err,results){
 						callback(null,results);
 					});
 				});
